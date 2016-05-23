@@ -1,0 +1,206 @@
+<?php
+/****************************************************************************************************************
+| This functinon gets the number of working days (M-F) in a month, quarter, and year for a passed in month/year |
+| Additionally, it shows how many working days have already passed, and how many remain.                        |
+| - Josh Brooker 5/22/16 github: @jbtech85
+****************************************************************************************************************/
+    
+// note: this function has to be set before it's called (no hoisting), or !function_exists breaks it somehow
+// since this file may be called multiple times, only recreate the function if it doesn't already exist
+if(!function_exists('getWorkingDays')) {
+    // create an array for our working days of a given month, it's extrapolated quarter, and given year
+    function getWorkingDays($month,$year){
+        // begin on day 0
+        $onDay = 0;
+        
+        // begin on the first week
+        $onWeek = 1;
+        
+        // the main array
+        $workingDayArray = array();
+        
+        # this wasn't in the last iteration I tested, though it seems it really should be.
+        # will uncomment after testing, but feel free to include it now at your own discretion
+        #// initialize the array to hold each working day, and what day of the month it was
+        #$workingDayArray['DayOfMonth'][] = array();
+        
+        // initialize days thus far for the month
+        $workingDayArray['DaysThusFarMonth'] = 0;
+        
+        // initialize days left for the month
+        $workingDayArray['DaysLeftMonth'] = 0;
+        
+        // this built in php function returns the days in a given month of a given year
+        $daysInMonth = cal_days_in_month(CAL_GREGORIAN,$month,$year);
+
+        // loop through each day of the month
+        while($onDay < $daysInMonth){
+            // always starting on the next day
+            $onDay++;
+            
+            // utilizing the built in date() function to get the day of the week
+            $dayOfWeek = date("l",strtotime("{$year}-{$month}-{$onDay}"));
+
+            // if the current iteration doesn't fall on the weekend
+            if($dayOfWeek != 'Sunday' && $dayOfWeek != 'Saturday'){
+                // add it to our array so we can check against it later
+                $workingDayArray['DayOfMonth'][] = $onDay;
+                $workingDayArray["Week{$onWeek}"]++;
+
+                if($onDay < date('j')){
+                    $workingDayArray['DaysThusFarMonth']++;
+                } else {
+                    $workingDayArray['DaysLeftMonth']++;
+                }
+            }
+
+            if($dayOfWeek == 'Saturday'){
+                $onWeek++;
+            }
+        }
+
+        // now do the quarter calculations
+        $quarter = ceil($month/3);
+        $onDay = 0;
+        $onMonth = 1;
+        $dayOfQuarterArray = array();
+        $workingDayArray['DaysThusFarQuarter'] = 0;
+        $workingDayArray['DaysLeftQuarter'] = 0;
+
+        // get the working days in this quarter
+        $MonthThree = $quarter*3;
+        $MonthTwo = $MonthThree - 1;
+        $MonthOne = $MonthTwo - 1;
+
+        $daysInMonth1 = cal_days_in_month(CAL_GREGORIAN,$MonthOne,$year);
+        $daysInMonth2 = cal_days_in_month(CAL_GREGORIAN,$MonthTwo,$year);
+        $daysInMonth3 = cal_days_in_month(CAL_GREGORIAN,$MonthThree,$year);
+        $daysInQuarter = $daysInMonth1 + $daysInMonth2 + $daysInMonth3;
+
+        if($month == $MonthOne){
+            $dayOfQuarter = date('j');
+        } elseif($month == $MonthTwo){
+            $dayOfQuarter = date('j') + $daysInMonth1;
+        } elseif($month == $MonthThree){
+            $dayOfQuarter = date('j') + $daysInMonth1 + $daysInMonth2;
+        }
+
+        // our day of the month
+        $dayOfMonth = 0;
+        while($onDay < $daysInQuarter){
+            $onDay++;
+            $dayOfMonth++;
+
+            $dayOfWeek = date("l",strtotime("{$year}-{$onMonth}-{$dayOfMonth}"));
+
+            if($dayOfWeek != 'Sunday' && $dayOfWeek != 'Saturday'){
+                // add it to our array so we can check against it later
+                $dayOfQuarterArray[] = $onDay;
+            }
+
+            // if we're on the last day of month 1, go to month 2
+            if($onDay == $daysInMonth1){
+                $onMonth = 2;
+
+                // reset our day of the month to 0
+                $dayOfMonth = 0;
+            }
+
+            // if we're on the last day of month 2, go to month 3
+            if($onDay == $daysInMonth1 + $daysInMonth2){
+                $onMonth = 3;
+
+                // reset our day of the month to 0
+                $dayOfMonth = 0;
+            }
+        }
+
+        $workingDayArray['DayOfQuarter'] = $dayOfQuarterArray;
+
+        foreach($workingDayArray['DayOfQuarter'] AS $day){
+            if($day < $dayOfQuarter){
+                $workingDayArray['DaysThusFarQuarter']++;
+            } else {
+                $workingDayArray['DaysLeftQuarter']++;
+            }
+        }
+
+        // finally, get the working day stats for the year
+        $onDay = 0;
+        $onMonth = 1;
+        $dayOfYearArray = array();
+        $workingDayArray['DaysThusFarYear'] = 0;
+        $workingDayArray['DaysLeftYear'] = 0;
+        $daysSoFar = 0;
+        $dayOfYear = 0;
+
+        $daysInMonthArray = array();
+
+        // get the number of days for each month in this year
+        $daysInYear =  $daysInMonthArray['1']  = cal_days_in_month(CAL_GREGORIAN,1,$year);
+        $daysInYear += $daysInMonthArray['2']  = cal_days_in_month(CAL_GREGORIAN,2,$year);
+        $daysInYear += $daysInMonthArray['3']  = cal_days_in_month(CAL_GREGORIAN,3,$year);
+        $daysInYear += $daysInMonthArray['4']  = cal_days_in_month(CAL_GREGORIAN,4,$year);
+        $daysInYear += $daysInMonthArray['5']  = cal_days_in_month(CAL_GREGORIAN,5,$year);
+        $daysInYear += $daysInMonthArray['6']  = cal_days_in_month(CAL_GREGORIAN,6,$year);
+        $daysInYear += $daysInMonthArray['7']  = cal_days_in_month(CAL_GREGORIAN,7,$year);
+        $daysInYear += $daysInMonthArray['8']  = cal_days_in_month(CAL_GREGORIAN,8,$year);
+        $daysInYear += $daysInMonthArray['9']  = cal_days_in_month(CAL_GREGORIAN,9,$year);
+        $daysInYear += $daysInMonthArray['10'] = cal_days_in_month(CAL_GREGORIAN,10,$year);
+        $daysInYear += $daysInMonthArray['11'] = cal_days_in_month(CAL_GREGORIAN,11,$year);
+        $daysInYear += $daysInMonthArray['12'] = cal_days_in_month(CAL_GREGORIAN,12,$year);
+
+        // figure out what day of the year it is
+        for($m = 1; $m <= 12; $m++){
+            if($month > $m){
+                $dayOfYear += $daysInMonthArray[$m];
+            } else {
+                $dayOfYear += date('j');
+                break;
+            }
+        }
+
+        // our day of the month
+        $dayOfMonth = 0;
+
+        // each time we pass a month, add the number of days for the next month
+        $daysSoFar += $daysInMonthArray['1'];
+        while($onDay < $daysInYear){
+            $onDay++;
+            $dayOfMonth++;
+            $dayOfWeek = date("l",strtotime("{$year}-{$onMonth}-{$dayOfMonth}"));
+
+            // if the current iteration is a working day
+            if($dayOfWeek != 'Sunday' && $dayOfWeek != 'Saturday'){
+                // add it to our array so we can check against it later
+                $dayOfYearArray[] = $onDay;
+            }
+
+            // if we're on the last day of month 1, go to month 2
+            if($onDay == $daysSoFar){
+                // go to the next month
+                $onMonth++;
+
+                // add it's number of days
+                $daysSoFar += $daysInMonthArray[$onMonth];
+
+                // reset our day of the month to 0
+                $dayOfMonth = 0;
+            }
+        }
+
+        // add dayOfYearArray to our main workingDayArray
+        $workingDayArray['DayOfYear'] = $dayOfYearArray;
+
+        // and then check against it to get days thus far and days left
+        foreach($workingDayArray['DayOfYear'] AS $day){
+            if($day < $dayOfYear){
+                $workingDayArray['DaysThusFarYear']++;
+            } else {
+                $workingDayArray['DaysLeftYear']++;
+            }
+        }
+
+        return $workingDayArray;
+    }
+}
