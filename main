@@ -1,9 +1,9 @@
 <?php
-/*********************************************************************************************************************
-| This functinon gets the number of working days (M-F) in a month, quarter, and year for a passed in month/year       |
-| Additionally, it shows how many working days have already passed, and how many remain (if using current month/year. |
-| - Josh Brooker 5/22/16 github: @jbtech85                                                                            |
-**********************************************************************************************************************/
+/**********************************************************************************************************************
+| This functinon gets the number of working days (M-F) in a month, quarter, and year for a passed in month/year        |
+| Additionally, it shows how many working days have already passed, and how many remain (if using current month/year). |
+| - Josh Brooker 5/22/16 github: @jbtech85                                                                             |
+***********************************************************************************************************************/
     
 // note: this function has to be set before it's called (no hoisting), or !function_exists breaks it somehow
 // since this file may be called multiple times, only recreate the function if it doesn't already exist
